@@ -29,9 +29,94 @@ fn largest_list<T, impl TDrop: Drop<T>>(l1: Array<T>, l2: Array<T>) -> Array<T> 
     }
 }
 
+// The PartialOrd trait implements comparison operations for T
+// using the PartialOrd trait to compare 
+fn smallest_number<T, impl TPartialOrd: PartialOrd<T>, impl TCopy: Copy<T>, impl TDrop: Drop<T>>(list: @Array<T>) -> T {
+    // Notice that we use the desnap (*) operator
+    let mut smallest = *list[0];
+
+    // the index we will use to loop through the list 
+    // it should be immutable 
+    let mut index = 1;
+    //
+
+    // Iterating through the whole list storing the smallest element
+    while index < list.len() {
+        if *list[index] < smallest {
+            smallest = *list[index];
+        }
+        index = index + 1;
+    };
+
+    smallest
+
+}
+
+// we can alseo use generic type for struct as well
+#[derive(Copy, Drop)]
+struct Wallet<T> {
+    balance: T,
+}
+
+// we can have a different field with different genric type value
+#[derive(Drop)]
+struct Wallet1<T, U> {
+    balance: T,
+    address: U
+}
+
+// the above is equivalent to this 
+//just that it automaticaly generates generic type
+// impl WalletDrop<T, +Drop<T>> of Drop<Wallet<T>>;
+
+// it can be used on traits as well 
+trait WalletTrait<T> {
+    fn balance(self: @Wallet<T>) -> T;
+}
+
+// implementation 
+impl WalletImpl<T, +Copy<T>> of WalletTrait<T> {
+    fn balance(self: @Wallet<T>) -> T {
+        return *self.balance;
+    }
+}
+// for known types
+/// Trait for wallets of type u128
+trait WalletReceiveTrait {
+    fn receive(ref self: Wallet<u128>, value: u128);
+}
+
+impl WalletReceiveImpl of WalletReceiveTrait {
+    fn receive(ref self: Wallet<u128>, value: u128) {
+        self.balance += value;
+    }
+}
+
+// generic with mixture 
+// remember traits are like interface in some programming language
+// it can be declare as a public 
+trait WalletMixTrait<T1, U1> {
+    fn mixup<T2, +Drop<T2>, U2, +Drop<U2>>(
+        self: Wallet1<T1, U1>, other: Wallet1<T2, U2>,
+    ) -> Wallet1<T1, U2>;
+}
+
+impl WalletMixImpl<T1, +Drop<T1>, U1, +Drop<U1>> of WalletMixTrait<T1, U1> {
+    fn mixup<T2, +Drop<T2>, U2, +Drop<U2>>(
+        self: Wallet1<T1, U1>, other: Wallet1<T2, U2>,
+    ) -> Wallet1<T1, U2> {
+        Wallet1 { balance: self.balance, address: other.address }
+    }
+}
+
+
 fn main() {
     let mut l1 = array![1, 2];
     let mut l2 = array![1,2,4];
 
     let l3 = largest_list(l1, l2);
+    let w = Wallet { balance: 4};
+    assert!(w.balance() == 4);
+    let w1 = Wallet1 { balance: 3, address: 14 };
+
 }
